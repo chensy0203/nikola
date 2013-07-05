@@ -342,8 +342,8 @@ class Post(object):
             teaser = TEASER_REGEXP.split(data)[0]
             if teaser != data:
                 teaser_str = TEASER_REGEXP.search(data).groups()[-1] or \
-                    self.messages[lang]["Read more"] + '...'
-                teaser += '<p><a href="{0}">{1}</a></p>'.format(
+                    self.messages[lang]["Read more"] + ' »'
+                teaser += '<div class="more"><a href="{0}">{1}</a></div>'.format(
                     self.permalink(lang), teaser_str)
                 # This closes all open tags and sanitizes the broken HTML
                 document = lxml.html.fromstring(teaser)
@@ -465,10 +465,8 @@ def _get_metadata_from_file(meta_data):
     'FooBar'
     >>> str(g([".. title: FooBar"])["title"])
     'FooBar'
-    >>> 'title' in g(["","",".. title: FooBar"])
+    >>> 'title' in g(["",".. title: FooBar"])
     False
-    >>> 'title' in g(["",".. title: FooBar"])  # for #520
-    True
 
     """
     meta = {}
@@ -480,11 +478,7 @@ def _get_metadata_from_file(meta_data):
         string.punctuation)))
 
     for i, line in enumerate(meta_data):
-        # txt2tags requires an empty line at the beginning
-        # and since we are here because it's a 1-file post
-        # let's be flexible on what we accept, so, skip empty
-        # first lines.
-        if not line and i > 0:
+        if not line:
             break
         if 'title' not in meta:
             match = re_meta(line, 'title')
@@ -533,12 +527,6 @@ def get_metadata_from_meta_file(path, lang=None):
             meta['description'] = description
 
         return meta
-
-    elif lang:
-        # Metadata file doesn't exist, but not default language,
-        # So, if default language metadata exists, return that.
-        # This makes the 2-file format detection more reliable (Issue #525)
-        return get_metadata_from_meta_file(path, lang=None)
     else:
         return {}
 
